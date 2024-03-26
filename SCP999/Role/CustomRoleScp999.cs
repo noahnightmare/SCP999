@@ -73,23 +73,25 @@ namespace SCP999.Role
         /// <summary>
         /// All unneeded attributes that are part of the default custom role class but aren't used here. Ignored on YAML because these values are unused in here
         /// </summary>
-        [YamlIgnore] public override Dictionary<AmmoType, ushort> Ammo { get; set; }
-        [YamlIgnore] public override Dictionary<RoleTypeId, float> CustomRoleFFMultiplier { get; set; }
-        [YamlIgnore] public override bool DisplayCustomItemMessages { get; set; }
-        [YamlIgnore] public override bool IgnoreSpawnSystem { get; set; }
-        [YamlIgnore] public override List<string> Inventory { get; set; }
-        [YamlIgnore] public override bool KeepInventoryOnSpawn { get; set; }
-        [YamlIgnore] public override bool KeepPositionOnSpawn { get; set; }
-        [YamlIgnore] public override bool KeepRoleOnChangingRole { get; set; }
-        [YamlIgnore] public override bool KeepRoleOnDeath { get; set; }
-        [YamlIgnore] public override bool RemovalKillsPlayer { get; set; }
-        [YamlIgnore] public override float SpawnChance { get; set; }
+        [YamlIgnore] public override Dictionary<AmmoType, ushort> Ammo { get; set; } = default;
+        [YamlIgnore] public override Dictionary<RoleTypeId, float> CustomRoleFFMultiplier { get; set; } = default;
+        [YamlIgnore] public override bool DisplayCustomItemMessages { get; set; } = default;
+        [YamlIgnore] public override bool IgnoreSpawnSystem { get; set; } = default;
+        [YamlIgnore] public override List<string> Inventory { get; set; } = default;
+        [YamlIgnore] public override bool KeepInventoryOnSpawn { get; set; } = default;
+        [YamlIgnore] public override bool KeepPositionOnSpawn { get; set; } = default;
+        [YamlIgnore] public override bool KeepRoleOnChangingRole { get; set; } = default;
+        [YamlIgnore] public override bool KeepRoleOnDeath { get; set; } = default;
+        [YamlIgnore] public override bool RemovalKillsPlayer { get; set; } = default;
+        [YamlIgnore] public override float SpawnChance { get; set; } = default;
+
+        private CoroutineHandle coro;
 
         protected override void SubscribeEvents()
         {
             PlayerEvent.Spawned += OnSpawned;
             PlayerEvent.Dying += OnDying;
-            PlayerEvent.ChangingRole += OnChangingRole; 
+            PlayerEvent.ChangingRole += OnChangingRole;
             base.SubscribeEvents();
         }
 
@@ -120,9 +122,11 @@ namespace SCP999.Role
                     sch.transform.SetParent(ev.Player.GameObject.transform);
 
                     // fixes issue with schematic being too high
-                    sch.transform.localPosition = new Vector3(ev.Player.Position.x, ev.Player.Position.y - Scale.y, ev.Player.Position.z);
+                    sch.transform.localPosition = new Vector3(0, 0 - Scale.y, 0);
+
+                    coro = Timing.RunCoroutine(AnimationHandler(ev.Player, sch));
                 }
-                catch 
+                catch
                 {
                     Log.Error($"Error spawning/assigning {Schematic} schematic!");
                 }
@@ -140,6 +144,8 @@ namespace SCP999.Role
                 ev.Player.DisableEffect<Invisible>();
 
                 API.SpawnedObjects.FirstOrDefault(s => s.name == Schematic)?.Destroy();
+
+                if (coro.IsRunning) { Timing.KillCoroutines(coro); }
             }
         }
 
@@ -152,6 +158,24 @@ namespace SCP999.Role
                 ev.Player.DisableEffect<Invisible>();
 
                 API.SpawnedObjects.FirstOrDefault(s => s.name == Schematic)?.Destroy();
+
+                if (coro.IsRunning) { Timing.KillCoroutines(coro); }
+            }
+        }
+
+        private IEnumerator<float> AnimationHandler(Player player, SchematicObject sch)
+        {
+            yield return Timing.WaitForSeconds(0.1f);
+            for (; ;)
+            {
+                if (player.GameObject.GetComponent<Rigidbody>().velocity.magnitude < 0.1f && !sch.AnimationController.Equals("999Idle"))
+                {
+                    sch.AnimationController.Play("999Idle");
+                }
+                else if (player.GameObject.GetComponent<Rigidbody>().velocity.magnitude >= 0.1f && !sch.AnimationController.Equals("999Run"))
+                {
+                    sch.AnimationController.Play("999Run");
+                }
             }
         }
     }

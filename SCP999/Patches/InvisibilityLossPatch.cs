@@ -19,8 +19,7 @@
             if (!Player.TryGet(__instance.gameObject, out Player player))
                 return true;
 
-            if (CustomRole.Get(SCP999.Instance.Config.RoleConfigs.Scp999.Id).Check(player) &&
-                player.GetEffect(EffectType.Invisible).IsEnabled)
+            if (CustomRole.Get(SCP999.Instance.Config.RoleConfigs.Scp999.Id).Check(player))
             {
                 return false;
             }

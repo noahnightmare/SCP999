@@ -57,7 +57,7 @@ namespace SCP999.Abilities
 
         protected override void AbilityUsed(Player player)
         {
-            SoundHandler.PlayAudio(AbilitySound, Volume, false, "SCP-999", Vector3.zero, 0);
+            SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", Vector3.zero);
             Timing.RunCoroutine(AbilityInProgress(player));
 
             base.AbilityUsed(player);

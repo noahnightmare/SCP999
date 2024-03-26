@@ -12,7 +12,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Utf8Json.Resolvers.Internal;
 using PlayerEvent = Exiled.Events.Handlers.Player;
 
 namespace SCP999.Abilities
@@ -80,7 +80,7 @@ namespace SCP999.Abilities
 
             if (Check(ev.Player))
             {
-                Timing.KillCoroutines(coro);
+                if (coro.IsRunning) { Timing.KillCoroutines(coro); }
             }
         }
 
@@ -91,7 +91,7 @@ namespace SCP999.Abilities
             // Handles stopping the coroutine when player dies
             if (Check(ev.Player))
             {
-                Timing.KillCoroutines(coro);
+                if (coro.IsRunning) { Timing.KillCoroutines(coro); }
             }
         }
 
