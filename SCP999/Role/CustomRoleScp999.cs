@@ -20,6 +20,7 @@ using YamlDotNet.Serialization;
 using Exiled.API.Enums;
 using CustomPlayerEffects;
 using MapEditorReborn.API.Features.Objects;
+using System;
 
 namespace SCP999.Role
 {
@@ -35,8 +36,8 @@ namespace SCP999.Role
         public override string Description { get; set; } = "A large gelatinous mass of translucent orange slime, reacting with overwhelming elation with nearby players";
         public override string CustomInfo { get; set; } = "SCP-999";
         public override Vector3 Scale { get; set; } = new Vector3(0.5f, 0.5f, 0.5f);
-        [Description("The speed of SCP 999. Use any value from 0-255 (higher value = higher speed)")]
-        public byte Speed { get; set; } = 1;
+        [Description("The speed of SCP 999. Use any value from -255 to 255 (higher value = higher speed. Using a minus value will apply the Sinkhole effect)")]
+        public short Speed { get; set; } = 1;
         public override string ConsoleMessage { get; set; } = "Vous avez apparue dans un rôle personnalisé !";
         public override Exiled.API.Features.Broadcast Broadcast { get; set; } = new Exiled.API.Features.Broadcast ("Vous êtes SCP-999 !", (ushort)10, true, global::Broadcast.BroadcastFlags.Normal);
         public override string AbilityUsage { get; set; } = "Pour activer la capacité appuyer sur la touche [Noclip], [ALT] !";
@@ -70,21 +71,6 @@ namespace SCP999.Role
             new PassiveRegenerateHealth(),
         };
 
-        /// <summary>
-        /// All unneeded attributes that are part of the default custom role class but aren't used here. Ignored on YAML because these values are unused in here
-        /// </summary>
-        [YamlIgnore] public override Dictionary<AmmoType, ushort> Ammo { get; set; } = default;
-        [YamlIgnore] public override Dictionary<RoleTypeId, float> CustomRoleFFMultiplier { get; set; } = default;
-        [YamlIgnore] public override bool DisplayCustomItemMessages { get; set; } = default;
-        [YamlIgnore] public override bool IgnoreSpawnSystem { get; set; } = default;
-        [YamlIgnore] public override List<string> Inventory { get; set; } = default;
-        [YamlIgnore] public override bool KeepInventoryOnSpawn { get; set; } = default;
-        [YamlIgnore] public override bool KeepPositionOnSpawn { get; set; } = default;
-        [YamlIgnore] public override bool KeepRoleOnChangingRole { get; set; } = default;
-        [YamlIgnore] public override bool KeepRoleOnDeath { get; set; } = default;
-        [YamlIgnore] public override bool RemovalKillsPlayer { get; set; } = default;
-        [YamlIgnore] public override float SpawnChance { get; set; } = default;
-
         private CoroutineHandle coro;
 
         protected override void SubscribeEvents()
@@ -112,8 +98,10 @@ namespace SCP999.Role
             {
                 ev.Player.HumeShield = HumeShield;
                 ev.Player.EnableEffect<Invisible>();
-                ev.Player.EnableEffect<MovementBoost>(Speed);
 
+                if (Speed >= 0) ev.Player.EnableEffect<MovementBoost>(Speed);
+                else { ev.Player.EnableEffect<Sinkhole>(-Speed); }
+                
                 try
                 {
                     // spawn schematic and assign it's parent as the player to follow the player
@@ -168,13 +156,22 @@ namespace SCP999.Role
             yield return Timing.WaitForSeconds(0.1f);
             for (; ;)
             {
-                if (player.GameObject.GetComponent<Rigidbody>().velocity.magnitude < 0.1f && !sch.AnimationController.Equals("999Idle"))
+                try
                 {
-                    sch.AnimationController.Play("999Idle");
+                    if (player.GameObject.GetComponent<Rigidbody>().velocity.magnitude < 0.1f && !sch.AnimationController.Equals("999Idle"))
+                    {
+                        sch.AnimationController.Play("999Idle");
+                    }
+                    else if (player.GameObject.GetComponent<Rigidbody>().velocity.magnitude >= 0.1f && !sch.AnimationController.Equals("999Run"))
+                    {
+                        sch.AnimationController.Play("999Run");
+                    }
                 }
-                else if (player.GameObject.GetComponent<Rigidbody>().velocity.magnitude >= 0.1f && !sch.AnimationController.Equals("999Run"))
+                catch (Exception e)
                 {
-                    sch.AnimationController.Play("999Run");
+                    Log.Error($"Error occured: {e.Message}");
+                    Log.Error($"Stack Trace: {e.StackTrace}");
+                    throw;
                 }
             }
         }

@@ -15,6 +15,7 @@ using UnityEngine;
 using SCP999.Handlers;
 
 using PlayerEvent = Exiled.Events.Handlers.Player;
+using Exiled.API.Extensions;
 
 namespace SCP999.Abilities
 {
@@ -36,10 +37,10 @@ namespace SCP999.Abilities
         public int HealAmount { get; set; } = 2;
 
         [Description("Sound if Healthy is used (sound file name in EXILED/Configs/Sounds/)")]
-        public string AbilitySound { get; set; } = "999AbilitySound.mp3";
+        public string AbilitySound { get; set; } = "999AbilitySound.ogg";
 
         [Description("Volume of the sound above: 0 - 255")]
-        public byte Volume { get; set; } = 255;
+        public byte Volume { get; set; } = 100;
 
         public bool canUseHealthy = true;
 

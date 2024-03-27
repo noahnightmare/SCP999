@@ -1,5 +1,6 @@
 ﻿using Exiled.API.Features;
 using Exiled.Events.EventArgs.Player;
+using MEC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +15,16 @@ namespace SCP999
         // Selects a random SCP player to be SCP 999 at configurable chance
         public void OnRoundStarted()
         {
-            if (rng.Next(1, 101) <= SCP999.Instance.Config.RoleConfigs.Scp999.Chance)
+            Timing.CallDelayed(0.25f, () =>
             {
-                SCP999.Instance.Config.RoleConfigs.Scp999.AddRole(Player.List.Where(x => x.IsScp).ToList().RandomItem());
-            }
+                if (Player.List.Where(x => x.IsScp).Count() > 0)
+                {
+                    if (rng.Next(1, 101) <= SCP999.Instance.Config.RoleConfigs.Scp999.Chance)
+                    {
+                        SCP999.Instance.Config.RoleConfigs.Scp999.AddRole(Player.List.Where(x => x.IsScp).ToList().RandomItem());
+                    }
+                }
+            });
         }
     }
 }

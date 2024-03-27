@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -68,6 +69,7 @@
     <Compile Include="Abilities\HealOthersOnHit.cs" />
     <Compile Include="Abilities\Healthy.cs" />
     <Compile Include="Abilities\PassiveRegenerateHealth.cs" />
+    <Compile Include="Commands\ForceRoleCommand.cs" />
     <Compile Include="Configs\Config.cs" />
     <Compile Include="Configs\Roles.cs" />
     <Compile Include="EventHandlers.cs" />

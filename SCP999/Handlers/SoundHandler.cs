@@ -1,16 +1,23 @@
-﻿using Exiled.API.Extensions;
-using Exiled.API.Features.Components;
+﻿using CentralAuth;
+using Discord;
+using Exiled.API.Enums;
+using Exiled.API.Extensions;
 using Exiled.API.Features;
+using Exiled.API.Features.Components;
+using Exiled.API.Features.Roles;
 using MEC;
 using Mirror;
 using PlayerRoles;
 using SCPSLAudioApi.AudioCore;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
 using UnityEngine;
 using VoiceChat;
-using Exiled.API.Enums;
 
 namespace SCP999.Handlers
 {
@@ -66,6 +73,7 @@ namespace SCP999.Handlers
                 audioPlayer.Enqueue(path, -1);
                 audioPlayer.LogDebug = false;
                 audioPlayer.BroadcastChannel = VoiceChatChannel.Intercom;
+
                 if (position != Vector3.zero)
                 {
                     audioPlayer.BroadcastChannel = VoiceChatChannel.Proximity;
@@ -82,6 +90,7 @@ namespace SCP999.Handlers
                     }
                     catch (Exception) { }
                 }
+
                 audioPlayer.Volume = volume;
                 audioPlayer.Loop = loop;
                 audioPlayer.Play(0);
@@ -114,7 +123,8 @@ namespace SCP999.Handlers
             }
             catch (Exception e)
             {
-                Log.Error($"Error on: {e.Data} -- {e.StackTrace}");
+                Log.Error($"Error occured: {e.Message}");
+                Log.Error($"Stack Trace: {e.StackTrace}");
             }
         }
         public static void StopAudio()

@@ -4,16 +4,10 @@ using Server = Exiled.Events.Handlers.Server;
 using PlayerRoles.Spectating;
 using System;
 using Exiled.Events.Handlers;
-using SCP999;
 using Exiled.CustomRoles.API;
-using Exiled.CustomRoles;
 using Exiled.CustomRoles.API.Features;
-using PluginAPI.Roles;
-using SCP999.Configs;
-using SCPSLAudioApi.AudioCore;
 using SCP999.Handlers;
 using HarmonyLib;
-using System.Net;
 
 namespace SCP999
 {
@@ -27,7 +21,7 @@ namespace SCP999
 
         private Harmony _harmony;
 
-        private string HarmonyId { get; } = "@noahxo.SCP999";
+        private string HarmonyId { get; } = "noahxo.dev";
 
         public static SCP999 Instance;
 
@@ -82,6 +76,7 @@ namespace SCP999
             {
                 _harmony = new(HarmonyId);
                 _harmony.PatchAll();
+                Log.Warn($"Successfully registered patches under {_harmony.Id}");
             }
             catch (HarmonyException ex)
             {
