@@ -39,7 +39,7 @@ namespace SCP999.Role
         public override string Description { get; set; } = "A large gelatinous mass of translucent orange slime, reacting with overwhelming elation with nearby players";
         public override string CustomInfo { get; set; } = "SCP-999";
         public override Vector3 Scale { get; set; } = new Vector3(0.5f, 0.5f, 0.5f);
-        [Description("The speed of SCP 999. Use any value from -255 to 255 (higher value = higher speed. Using a minus value will apply the Sinkhole effect)")]
+        [Description("The speed of SCP 999. Use any value from -255 to 255 (higher value = higher speed. Using a minus value will apply the Disabled & Sinkhole effect)")]
         public short Speed { get; set; } = 1;
         public override string ConsoleMessage { get; set; } = "Vous avez apparue dans un rôle personnalisé !";
         public override Exiled.API.Features.Broadcast Broadcast { get; set; } = new Exiled.API.Features.Broadcast ("Vous êtes SCP-999 !", (ushort)10, true, global::Broadcast.BroadcastFlags.Normal);
@@ -105,7 +105,7 @@ namespace SCP999.Role
                 ev.Player.EnableEffect<Invisible>();
 
                 if (Speed >= 0) ev.Player.EnableEffect<MovementBoost>(Speed);
-                else { ev.Player.EnableEffect<Sinkhole>(-Speed); }
+                else { ev.Player.EnableEffect<Disabled>(-Speed); ev.Player.EnableEffect<Sinkhole>(-Speed); }
                 
                 try
                 {
