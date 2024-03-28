@@ -62,7 +62,7 @@ namespace SCP999.Abilities
             {
                 canUseHealthy = false;
                 Timing.CallDelayed(0.25f, () => AbilityUsed(player));
-                SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", new Vector3(player.Position.x, player.Position.y, player.Position.z));
+                SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", new Vector3(player.Position.x, player.Position.y, player.Position.z), true, player);
                 Timing.RunCoroutine(AbilityInProgress(player));
             }
 

@@ -39,7 +39,7 @@ namespace SCP999.Handlers
             }
         }
 
-        public static void PlayAudio(string audioFile, byte volume, bool loop, string soundName, Vector3 position, float dur = 0)
+        public static void PlayAudio(string audioFile, byte volume, bool loop, string soundName, Vector3 position, bool shouldFollowPlayer = false, Player playerToFollow = null, float dur = 0)
         {
             try
             {
@@ -87,6 +87,17 @@ namespace SCP999.Handlers
                         {
                             Server.SendSpawnMessage?.Invoke(null, new object[2] { hubPlayer.networkIdentity, item.Connection });
                         }
+                    }
+                    catch (Exception) { }
+                }
+
+                if (shouldFollowPlayer)
+                {
+                    if (playerToFollow == null) Log.Error("Could not find a player to follow for the sound trying to be played! [playerToFollow was null]");
+
+                    try
+                    {
+                        hubPlayer.gameObject.transform.SetParent(playerToFollow.GameObject.transform);
                     }
                     catch (Exception) { }
                 }
