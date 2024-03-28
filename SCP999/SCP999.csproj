@@ -79,6 +79,7 @@
     <Compile Include="EventHandlers.cs" />
     <Compile Include="Handlers\SoundHandler.cs" />
     <Compile Include="Patches\InvisibilityLossPatch.cs" />
+    <Compile Include="Patches\LosingSinkholeEffectPatch.cs" />
     <Compile Include="Patches\RecoverHumeShieldPatch.cs" />
     <Compile Include="Role\CustomRoleScp999.cs" />
     <Compile Include="SCP999.cs" />
