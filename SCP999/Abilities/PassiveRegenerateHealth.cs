@@ -54,16 +54,22 @@ namespace SCP999.Abilities
         {
             if (ev.Player == null) return;
 
+            Log.Info("Passive ability log - player spawned");
+
             // Handles running coro on spawn
-            if (Check(ev.Player))
+            Timing.CallDelayed(0.25f, () =>
             {
-                Log.Info("Health handler ran");
-                coro = Timing.RunCoroutine(HealthHandler());
-            }
+                if (Check(ev.Player))
+                {
+                    Log.Info("Health handler ran");
+                    coro = Timing.RunCoroutine(HealthHandler());
+                }
+            });
         }
 
         private void OnHurting(HurtingEventArgs ev)
         {
+            Log.Info("Passive ability log - player was hurt");
             // Handles the canRegenerateHealth variable - set to true normally but if damaged set to false, and set back to true after x time
             if (Check(ev.Player))
             {
@@ -83,6 +89,8 @@ namespace SCP999.Abilities
         {
             if (ev.Player == null) return;
 
+            Log.Info("Passive ability log - player changed role");
+
             if (Check(ev.Player))
             {
                 if (coro.IsRunning) { Timing.KillCoroutines(coro); }
@@ -92,6 +100,8 @@ namespace SCP999.Abilities
         private void OnDied(DiedEventArgs ev)
         {
             if (ev.Player == null) return;
+
+            Log.Info("Passive ability log - player died");
 
             // Handles stopping the coroutine when player dies
             if (Check(ev.Player))

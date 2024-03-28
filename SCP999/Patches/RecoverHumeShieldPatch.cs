@@ -45,6 +45,7 @@
             if (SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate < 5)
             {
                 __result = 0f;
+                return false;
             }
             __result = SCP999.Instance.Config.RoleConfigs.Scp999.HumeShieldRegenerationRate;
             return false;

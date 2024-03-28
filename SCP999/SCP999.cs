@@ -37,6 +37,11 @@ namespace SCP999
 
             Config.RoleConfigs.Scp999.Register();
 
+            foreach (CustomAbility ability in Config.RoleConfigs.Scp999.CustomAbilities)
+            {
+                ability.Register();
+            }
+
             SCPSLAudioApi.Startup.SetupDependencies();
             SoundHandler.InitialiseDirectory();
 
