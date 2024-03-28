@@ -57,6 +57,7 @@ namespace SCP999.Abilities
             // Handles running coro on spawn
             if (Check(ev.Player))
             {
+                Log.Info("Health handler ran");
                 coro = Timing.RunCoroutine(HealthHandler());
             }
         }
@@ -68,9 +69,13 @@ namespace SCP999.Abilities
             {
                 if (canRegenerateHealth)
                 {
+                    Log.Info("Can regenerate health!");
                     canRegenerateHealth = false;
                     Timing.CallDelayed(TimeBeforeHealthRecover, () => { canRegenerateHealth = true; });
+                    
                 }
+                Log.Info("Hume shield regen rate set to 0, wait 5 seconds...");
+                SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate = 0;
             }
         }
 
@@ -111,6 +116,8 @@ namespace SCP999.Abilities
                         p.Heal(HealthRegainOverTime);
                     }
                 };
+
+                SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate += 1;
             }
         }
     }

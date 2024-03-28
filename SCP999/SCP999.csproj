@@ -32,7 +32,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony">
+    <Reference Include="0Harmony, Version=2.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\EXILED References\Master\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
@@ -43,6 +44,9 @@
     </Reference>
     <Reference Include="Mirror">
       <HintPath>..\..\..\EXILED References\Master\Mirror.dll</HintPath>
+    </Reference>
+    <Reference Include="Pooling">
+      <HintPath>..\..\..\EXILED References\Master\Pooling.dll</HintPath>
     </Reference>
     <Reference Include="SCPSLAudioApi">
       <HintPath>..\..\..\EXILED References\Master\SCPSLAudioApi.dll</HintPath>

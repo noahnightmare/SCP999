@@ -8,6 +8,8 @@ using Exiled.CustomRoles.API;
 using Exiled.CustomRoles.API.Features;
 using SCP999.Handlers;
 using HarmonyLib;
+using System.Reflection;
+using Interactables.Verification;
 
 namespace SCP999
 {
@@ -76,7 +78,6 @@ namespace SCP999
             {
                 _harmony = new(HarmonyId);
                 _harmony.PatchAll();
-                Log.Warn($"Successfully registered patches under {_harmony.Id}");
             }
             catch (HarmonyException ex)
             {

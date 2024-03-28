@@ -21,6 +21,7 @@ using Exiled.API.Enums;
 using CustomPlayerEffects;
 using MapEditorReborn.API.Features.Objects;
 using System;
+using Exiled.API.Features.Roles;
 
 namespace SCP999.Role
 {
@@ -31,6 +32,8 @@ namespace SCP999.Role
         public override RoleTypeId Role { get; set; } = RoleTypeId.Scp0492;
         public override int MaxHealth { get; set; } = 1000;
         public int HumeShield { get; set; } = 2500;
+
+        public float HumeShieldRegenerationRate { get; set; } = 10;
         public float Chance { get; set; } = 15f;
         public override string Name { get; set; } = "SCP-999";
         public override string Description { get; set; } = "A large gelatinous mass of translucent orange slime, reacting with overwhelming elation with nearby players";
@@ -72,6 +75,8 @@ namespace SCP999.Role
         };
 
         private CoroutineHandle coro;
+        private SchematicObject sch;
+        public double nextHumeRegenRate;
 
         protected override void SubscribeEvents()
         {
@@ -105,14 +110,15 @@ namespace SCP999.Role
                 try
                 {
                     // spawn schematic and assign it's parent as the player to follow the player
-                    SchematicObject sch = ObjectSpawner.SpawnSchematic(Schematic, ev.Player.Position, ev.Player.Rotation, ev.Player.Scale, null, false);
+                    sch = ObjectSpawner.SpawnSchematic(Schematic, ev.Player.Position, ev.Player.Rotation, ev.Player.Scale, null, false);
+                    API.SpawnedObjects.Add(sch);
 
                     sch.transform.SetParent(ev.Player.GameObject.transform);
 
                     // fixes issue with schematic being too high
-                    sch.transform.localPosition = new Vector3(0, 0 - Scale.y, 0);
+                    sch.transform.localPosition = new Vector3(0, 0 - 1, 0);
 
-                    coro = Timing.RunCoroutine(AnimationHandler(ev.Player, sch));
+                    // coro = Timing.RunCoroutine(AnimationHandler(ev.Player));
                 }
                 catch
                 {
@@ -131,7 +137,12 @@ namespace SCP999.Role
                 Cassie.MessageTranslated(CassieAnnouncementOnDeath, CassieSubtitlesOnDeath, true, true, true);
                 ev.Player.DisableEffect<Invisible>();
 
-                API.SpawnedObjects.FirstOrDefault(s => s.name == Schematic)?.Destroy();
+                API.SpawnedObjects.FirstOrDefault(s => s.name == $"CustomSchematic-{Schematic}")?.Destroy();
+                if (sch != null)
+                {
+                    API.SpawnedObjects.Remove(sch);
+                    sch = null;
+                }
 
                 if (coro.IsRunning) { Timing.KillCoroutines(coro); }
             }
@@ -145,33 +156,41 @@ namespace SCP999.Role
             {
                 ev.Player.DisableEffect<Invisible>();
 
-                API.SpawnedObjects.FirstOrDefault(s => s.name == Schematic)?.Destroy();
+                API.SpawnedObjects.FirstOrDefault(s => s.name == $"CustomSchematic-{Schematic}")?.Destroy();
+                if (sch != null)
+                {
+                    API.SpawnedObjects.Remove(sch);
+                    sch = null;
+                }
 
                 if (coro.IsRunning) { Timing.KillCoroutines(coro); }
             }
         }
 
-        private IEnumerator<float> AnimationHandler(Player player, SchematicObject sch)
+        private IEnumerator<float> AnimationHandler(Player player)
         {
             yield return Timing.WaitForSeconds(0.1f);
             for (; ;)
             {
-                try
+                if (sch != null)
                 {
-                    if (player.GameObject.GetComponent<Rigidbody>().velocity.magnitude < 0.1f && !sch.AnimationController.Equals("999Idle"))
+                    try
                     {
-                        sch.AnimationController.Play("999Idle");
+                        if (player.Velocity.magnitude < 0.1f && !sch.AnimationController.Equals("999Idle"))
+                        {
+                            sch.AnimationController.Play("999Idle");
+                        }
+                        else if (player.Velocity.magnitude >= 0.1f && !sch.AnimationController.Equals("999Run"))
+                        {
+                            sch.AnimationController.Play("999Run");
+                        }
                     }
-                    else if (player.GameObject.GetComponent<Rigidbody>().velocity.magnitude >= 0.1f && !sch.AnimationController.Equals("999Run"))
+                    catch (Exception e)
                     {
-                        sch.AnimationController.Play("999Run");
+                        Log.Error($"Error occured: {e.Message}");
+                        Log.Error($"Stack Trace: {e.StackTrace}");
+                        throw;
                     }
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"Error occured: {e.Message}");
-                    Log.Error($"Stack Trace: {e.StackTrace}");
-                    throw;
                 }
             }
         }

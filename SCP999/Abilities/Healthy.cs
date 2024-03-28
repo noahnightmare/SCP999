@@ -40,7 +40,7 @@ namespace SCP999.Abilities
         public string AbilitySound { get; set; } = "999AbilitySound.ogg";
 
         [Description("Volume of the sound above: 0 - 255")]
-        public byte Volume { get; set; } = 100;
+        public byte Volume { get; set; } = 255;
 
         public bool canUseHealthy = true;
 
@@ -58,7 +58,7 @@ namespace SCP999.Abilities
 
         protected override void AbilityUsed(Player player)
         {
-            SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", Vector3.zero);
+            SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", new Vector3(player.Position.x, player.Position.y, player.Position.z));
             Timing.RunCoroutine(AbilityInProgress(player));
 
             base.AbilityUsed(player);
