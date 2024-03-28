@@ -54,14 +54,11 @@ namespace SCP999.Abilities
         {
             if (ev.Player == null) return;
 
-            Log.Info("Passive ability log - player spawned");
-
             // Handles running coro on spawn
             Timing.CallDelayed(0.25f, () =>
             {
                 if (Check(ev.Player))
                 {
-                    Log.Info("Health handler ran");
                     coro = Timing.RunCoroutine(HealthHandler());
                 }
             });
@@ -69,18 +66,15 @@ namespace SCP999.Abilities
 
         private void OnHurting(HurtingEventArgs ev)
         {
-            Log.Info("Passive ability log - player was hurt");
             // Handles the canRegenerateHealth variable - set to true normally but if damaged set to false, and set back to true after x time
             if (Check(ev.Player))
             {
                 if (canRegenerateHealth)
                 {
-                    Log.Info("Can regenerate health!");
                     canRegenerateHealth = false;
                     Timing.CallDelayed(TimeBeforeHealthRecover, () => { canRegenerateHealth = true; });
                     
                 }
-                Log.Info("Hume shield regen rate set to 0, wait 5 seconds...");
                 SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate = 0;
             }
         }
@@ -88,8 +82,6 @@ namespace SCP999.Abilities
         private void OnChangingRole(ChangingRoleEventArgs ev)
         {
             if (ev.Player == null) return;
-
-            Log.Info("Passive ability log - player changed role");
 
             if (Check(ev.Player))
             {
@@ -100,8 +92,6 @@ namespace SCP999.Abilities
         private void OnDied(DiedEventArgs ev)
         {
             if (ev.Player == null) return;
-
-            Log.Info("Passive ability log - player died");
 
             // Handles stopping the coroutine when player dies
             if (Check(ev.Player))

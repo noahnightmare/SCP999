@@ -46,20 +46,25 @@ namespace SCP999.Abilities
 
         protected override void SubscribeEvents()
         {
-            PlayerEvent.TogglingNoClip += OnPlayerTogglingNoClip;
             base.SubscribeEvents();
         }
 
         protected override void UnsubscribeEvents()
         {
-            PlayerEvent.TogglingNoClip -= OnPlayerTogglingNoClip;
             base.UnsubscribeEvents();
         }
 
         protected override void AbilityUsed(Player player)
         {
-            SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", new Vector3(player.Position.x, player.Position.y, player.Position.z));
-            Timing.RunCoroutine(AbilityInProgress(player));
+            if (player.IsNoclipPermitted) return;
+
+            if (canUseHealthy && Check(player, Exiled.CustomRoles.API.Features.Enums.CheckType.Available))
+            {
+                canUseHealthy = false;
+                Timing.CallDelayed(0.25f, () => AbilityUsed(player));
+                SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", new Vector3(player.Position.x, player.Position.y, player.Position.z));
+                Timing.RunCoroutine(AbilityInProgress(player));
+            }
 
             base.AbilityUsed(player);
         }
@@ -67,20 +72,7 @@ namespace SCP999.Abilities
         protected override void AbilityEnded(Player player)
         {
             SoundHandler.StopAudio();
-
-            base.AbilityEnded(player); 
-        }
-
-        private void OnPlayerTogglingNoClip(TogglingNoClipEventArgs ev)
-        {
-            if (ev.IsAllowed) return;
-
-            // checks if ability isn't currently being used
-            if (canUseHealthy && Check(ev.Player, Exiled.CustomRoles.API.Features.Enums.CheckType.Available))
-            {
-                canUseHealthy = false;
-                Timing.CallDelayed(0.25f, () => AbilityUsed(ev.Player));
-            }
+            base.AbilityEnded(player);
         }
 
         private IEnumerator<float> AbilityInProgress(Player player)
