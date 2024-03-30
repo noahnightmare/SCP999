@@ -42,7 +42,7 @@
             if (!CustomRole.Get(typeof(CustomRoleScp999)).Check(player))
                 return true;
 
-            if (SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate < 5)
+            if (SCP999.Instance.Config.RoleConfigs.Scp999.playerHumeShieldCooldowns.IsOnCooldown(player, out double remainingSeconds))
             {
                 __result = 0f;
                 return false;

@@ -9,6 +9,7 @@ using MapEditorReborn.API.Extensions;
 using MapEditorReborn.API.Features;
 using MapEditorReborn.API;
 
+using ServerEvent = Exiled.Events.Handlers.Server;
 using PlayerEvent = Exiled.Events.Handlers.Player;
 using System.ComponentModel;
 using SCP999.Abilities;
@@ -22,6 +23,7 @@ using CustomPlayerEffects;
 using MapEditorReborn.API.Features.Objects;
 using System;
 using Exiled.API.Features.Roles;
+using SCP999.Handlers;
 
 namespace SCP999.Role
 {
@@ -76,10 +78,12 @@ namespace SCP999.Role
 
         private CoroutineHandle coro;
         private Dictionary<Player, SchematicObject> schematics = new Dictionary<Player, SchematicObject>();
-        public double nextHumeRegenRate;
+        public CooldownHandler playerHumeShieldCooldowns = new CooldownHandler();
 
         protected override void SubscribeEvents()
         {
+            ServerEvent.WaitingForPlayers += OnWaitingForPlayers;
+            ServerEvent.RestartingRound += OnRestartingRound;
             PlayerEvent.Spawned += OnSpawned;
             PlayerEvent.Dying += OnDying;
             PlayerEvent.ChangingRole += OnChangingRole;
@@ -88,6 +92,8 @@ namespace SCP999.Role
 
         protected override void UnsubscribeEvents()
         {
+            ServerEvent.WaitingForPlayers -= OnWaitingForPlayers;
+            ServerEvent.RestartingRound -= OnRestartingRound;
             PlayerEvent.Spawned -= OnSpawned;
             PlayerEvent.Dying -= OnDying;
             PlayerEvent.ChangingRole -= OnChangingRole;
@@ -103,6 +109,16 @@ namespace SCP999.Role
             }
 
             base.AddRole(player);
+        }
+
+        private void OnWaitingForPlayers()
+        {
+            playerHumeShieldCooldowns = new CooldownHandler();
+        }
+
+        private void OnRestartingRound()
+        {
+            playerHumeShieldCooldowns = null;
         }
 
         private void OnSpawned(SpawnedEventArgs ev)

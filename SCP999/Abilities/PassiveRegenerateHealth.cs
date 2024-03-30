@@ -7,6 +7,7 @@ using MapEditorReborn.API;
 using MapEditorReborn.Events.Handlers;
 using MEC;
 using SCP999.Handlers;
+using SCP999.Role;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -31,25 +32,32 @@ namespace SCP999.Abilities
         [Description("Amount of time after being attacked that SCP 999 can recover health")]
         public float TimeBeforeHealthRecover { get; set; } = 10f;
 
-        private CooldownHandler cooldownHandler = new CooldownHandler();
+        private CooldownHandler cooldownHandler;
         private CoroutineHandle coro;
 
         protected override void SubscribeEvents()
         {
+            ServerEvent.WaitingForPlayers += OnWaitingForPlayers;
             ServerEvent.RoundStarted += OnRoundStarted;
+            ServerEvent.RestartingRound += OnRestartingRound;
+            PlayerEvent.Spawned += OnSpawned;
             PlayerEvent.Hurting += OnHurting;
-            PlayerEvent.ChangingRole += OnChangingRole;
-            PlayerEvent.Died += OnDied;
             base.SubscribeEvents();
         }
 
         protected override void UnsubscribeEvents()
         {
+            ServerEvent.WaitingForPlayers -= OnWaitingForPlayers;
             ServerEvent.RoundStarted -= OnRoundStarted;
+            ServerEvent.RestartingRound -= OnRestartingRound;
+            PlayerEvent.Spawned -= OnSpawned;
             PlayerEvent.Hurting -= OnHurting;
-            PlayerEvent.ChangingRole -= OnChangingRole;
-            PlayerEvent.Died -= OnDied;
             base.UnsubscribeEvents();
+        }
+
+        private void OnWaitingForPlayers()
+        {
+            cooldownHandler = new CooldownHandler();
         }
 
         private void OnRoundStarted()
@@ -61,6 +69,16 @@ namespace SCP999.Abilities
             });
         }
 
+        private void OnSpawned(SpawnedEventArgs ev)
+        {
+            if (Check(ev.Player))
+            {
+                // initialise cooldowns for players spawning as 999
+                cooldownHandler.PutOnCooldown(ev.Player, TimeSpan.FromSeconds(0));
+                SCP999.Instance.Config.RoleConfigs.Scp999.playerHumeShieldCooldowns.PutOnCooldown(ev.Player, TimeSpan.FromSeconds(0));
+            }
+        }
+
         private void OnHurting(HurtingEventArgs ev)
         {
             // Handles the health regeneration cooldown
@@ -68,29 +86,14 @@ namespace SCP999.Abilities
             {
                 cooldownHandler.PutOnCooldown(ev.Player, TimeSpan.FromSeconds(TimeBeforeHealthRecover));
 
-                SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate = 0;
+                SCP999.Instance.Config.RoleConfigs.Scp999.playerHumeShieldCooldowns.PutOnCooldown(ev.Player, TimeSpan.FromSeconds(5));
             }
         }
 
-        private void OnChangingRole(ChangingRoleEventArgs ev)
+        private void OnRestartingRound()
         {
-            if (ev.Player == null) return;
-
-            if (Check(ev.Player))
-            {
-                if (coro.IsRunning) { Timing.KillCoroutines(coro); }
-            }
-        }
-
-        private void OnDied(DiedEventArgs ev)
-        {
-            if (ev.Player == null) return;
-
-            // Handles stopping the coroutine when player dies
-            if (Check(ev.Player))
-            {
-                if (coro.IsRunning) { Timing.KillCoroutines(coro); }
-            }
+            Timing.KillCoroutines(coro);
+            cooldownHandler = null;
         }
 
         private IEnumerator<float> HealthHandler()
@@ -100,15 +103,13 @@ namespace SCP999.Abilities
             {
                 yield return Timing.WaitForSeconds(1f);
 
-                foreach(Player player in cooldownHandler.GetPlayerCooldowns().Keys)
+                foreach(Player player in cooldownHandler.GetPlayerCooldowns()?.Keys.Where(x => CustomRole.Get(typeof(CustomRoleScp999)).Check(x)))
                 {
                     if (!cooldownHandler.IsOnCooldown(player, out double remainingSeconds))
                     {
                         player.Heal(HealthRegainOverTime);
                     } 
                 }
-
-                SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate += 1;
             }
         }
     }

@@ -15,6 +15,7 @@ using UnityEngine;
 using SCP999.Handlers;
 
 using PlayerEvent = Exiled.Events.Handlers.Player;
+using ServerEvent = Exiled.Events.Handlers.Server;
 using Exiled.API.Extensions;
 
 namespace SCP999.Abilities
@@ -42,15 +43,19 @@ namespace SCP999.Abilities
         [Description("Volume of the sound above: 0 - 255")]
         public byte Volume { get; set; } = 255;
 
-        private CooldownHandler cooldownHandler = new CooldownHandler();
+        private CooldownHandler cooldownHandler;
 
         protected override void SubscribeEvents()
         {
+            ServerEvent.WaitingForPlayers += OnWaitingForPlayers;
+            ServerEvent.RestartingRound += OnRestartingRound;
             base.SubscribeEvents();
         }
 
         protected override void UnsubscribeEvents()
         {
+            ServerEvent.WaitingForPlayers -= OnWaitingForPlayers;
+            ServerEvent.RestartingRound -= OnRestartingRound;
             base.UnsubscribeEvents();
         }
 
@@ -94,6 +99,16 @@ namespace SCP999.Abilities
             }
 
             AbilityEnded(player);
+        }
+
+        private void OnWaitingForPlayers()
+        {
+            cooldownHandler = new CooldownHandler();
+        }
+
+        private void OnRestartingRound()
+        {
+            cooldownHandler = null;
         }
     }
 }
