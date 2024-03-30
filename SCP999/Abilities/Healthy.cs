@@ -42,7 +42,7 @@ namespace SCP999.Abilities
         [Description("Volume of the sound above: 0 - 255")]
         public byte Volume { get; set; } = 255;
 
-        public bool canUseHealthy = true;
+        public static Dictionary<Player, bool> canUseAbilityDict = new Dictionary<Player, bool>();
 
         protected override void SubscribeEvents()
         {
@@ -58,12 +58,11 @@ namespace SCP999.Abilities
         {
             if (player.IsNoclipPermitted) return;
 
-            if (canUseHealthy && Check(player, Exiled.CustomRoles.API.Features.Enums.CheckType.Available))
+            if (canUseAbilityDict.TryGetValue(player, out bool canUseAbility) && canUseAbility && Check(player, Exiled.CustomRoles.API.Features.Enums.CheckType.Available))
             {
-                canUseHealthy = false;
-                Timing.CallDelayed(0.25f, () => AbilityUsed(player));
+                canUseAbilityDict[player] = false;
                 SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", new Vector3(player.Position.x, player.Position.y, player.Position.z), true, player);
-                Timing.RunCoroutine(AbilityInProgress(player));
+                Timing.RunCoroutine(AbilityInProgress(player).CancelWith(player.GameObject));
             }
 
             base.AbilityUsed(player);
@@ -71,14 +70,13 @@ namespace SCP999.Abilities
 
         protected override void AbilityEnded(Player player)
         {
+            Timing.CallDelayed(Cooldown, () => { canUseAbilityDict[player] = true; });
             SoundHandler.StopAudio();
             base.AbilityEnded(player);
         }
 
         private IEnumerator<float> AbilityInProgress(Player player)
         {
-            Timing.CallDelayed(Cooldown, () => { canUseHealthy = true; });
-
             // one tick per "duration" config
             for (int i = 0; i < Duration; i++)
             {

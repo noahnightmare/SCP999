@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using Exiled.CustomRoles.API.Features;
 using SCP999.Role;
+using PluginAPI.Events;
 
 namespace SCP999.Commands
 {
@@ -16,31 +17,49 @@ namespace SCP999.Commands
     {
         public string Command => "force999";
         public string[] Aliases => ["f999"];
-        public string Description => "Force a player to play as SCP 999 - Mainly for testing";
+        public string Description => "Forcer un joueur à incarner SCP 999";
 
         public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
             if (!sender.CheckPermission("999.set"))
             {
-                response = "You do not have permission to use this command.";
+                response = "Vous n'êtes pas autorisé à utiliser cette commande.";
                 return false;
             }
 
             if (arguments.Count == 0)
             {
-                response = "You didn't specify a player to set. Use force999 <player name>";
+                response = "Vous n'avez pas spécifié de joueur à définir. Utilisez force999 <nom du joueur>";
                 return false;
             }
 
-            if (!Player.List.Contains(Player.Get(arguments.At(0))))
+            string args = arguments.At(0);
+
+            if (args == "*" || args == "all")
             {
-                response = "Player not found. Use their nickname!";
-                return false;
+                foreach (Player player in Player.List.Where(x => !CustomRole.Get(typeof(CustomRoleScp999)).Check(x)))
+                {
+                    CustomRole.Get(typeof(CustomRoleScp999)).AddRole(player);
+                }
+            }
+            else
+            {
+                if (!Player.List.Contains(Player.Get(args)))
+                {
+                    response = "Joueur non trouvé. Utilisez * ou all pour définir tout le monde sur 999.";
+                    return false;
+                }
+
+                if (CustomRole.Get(typeof(CustomRoleScp999)).Check(Player.Get(args)))
+                {
+                    response = "Le joueur est déjà SCP 999 !";
+                    return false;
+                }
+
+                CustomRole.Get(typeof(CustomRoleScp999)).AddRole(Player.Get(args));
             }
 
-            CustomRole.Get(typeof(CustomRoleScp999)).AddRole(Player.Get(arguments.At(0)));
-
-            response = "Player set as 999!";
+            response = "Joueur(s) défini(s) sur 999 !";
             return true;
         }
     }

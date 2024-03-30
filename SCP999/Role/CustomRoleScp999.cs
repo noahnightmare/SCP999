@@ -75,7 +75,7 @@ namespace SCP999.Role
         };
 
         private CoroutineHandle coro;
-        private SchematicObject sch;
+        private Dictionary<Player, SchematicObject> schematics = new Dictionary<Player, SchematicObject>();
         public double nextHumeRegenRate;
 
         protected override void SubscribeEvents()
@@ -94,6 +94,17 @@ namespace SCP999.Role
             base.UnsubscribeEvents();
         }
 
+        public override void AddRole(Player player)
+        {
+            if (Check(player))
+            {
+                Log.Info($"Player {player.Nickname} was assigned 999 but already had the role. Skipping AddRole...");
+                return;
+            }
+
+            base.AddRole(player);
+        }
+
         private void OnSpawned(SpawnedEventArgs ev)
         {
             if (ev.Player == null) return;
@@ -101,24 +112,30 @@ namespace SCP999.Role
             // Handles setting values on spawn
             if (Check(ev.Player))
             {
-                ev.Player.HumeShield = HumeShield;
+                Timing.CallDelayed(0.25f, () => { ev.Player.HumeShield = HumeShield; });
                 ev.Player.EnableEffect<Invisible>();
 
-                if (Speed >= 0) ev.Player.EnableEffect<MovementBoost>(Speed);
-                else { ev.Player.EnableEffect<Disabled>(-Speed); ev.Player.EnableEffect<Sinkhole>(-Speed); }
-                
+                Log.Info($"Adding player {ev.Player.Nickname} to both dictionaries");
+
+                Healthy.canUseAbilityDict.Add(ev.Player, true);
+                PassiveRegenerateHealth.canRegenerateHealthDict.Add(ev.Player, true);
+
+                if (Speed >= 0) ev.Player.EnableEffect<MovementBoost>((byte)Speed);
+                else { ev.Player.EnableEffect<Disabled>((byte)Speed, 0, false); ev.Player.EnableEffect<Sinkhole>((byte)-Speed, 0, false); }
+
                 try
                 {
                     // spawn schematic and assign it's parent as the player to follow the player
-                    sch = ObjectSpawner.SpawnSchematic(Schematic, ev.Player.Position, ev.Player.Rotation, ev.Player.Scale, null, false);
-                    API.SpawnedObjects.Add(sch);
+                    SchematicObject sch = ObjectSpawner.SpawnSchematic(Schematic, ev.Player.Position, ev.Player.Rotation, ev.Player.Scale, null, false);
+                    // API.SpawnedObjects.Add(sch);
+                    schematics.Add(ev.Player, sch);
 
                     sch.transform.SetParent(ev.Player.GameObject.transform);
 
                     // fixes issue with schematic being too high
                     sch.transform.localPosition = new Vector3(0, 0 - 1, 0);
 
-                    // coro = Timing.RunCoroutine(AnimationHandler(ev.Player));
+                    // coro = Timing.RunCoroutine(AnimationHandler(ev.Player).CancelWith(ev.Player.GameObject));
                 }
                 catch
                 {
@@ -134,14 +151,18 @@ namespace SCP999.Role
             // Handles sending the cassie message on death
             if (Check(ev.Player))
             {
+                if (Healthy.canUseAbilityDict.ContainsKey(ev.Player)) { Healthy.canUseAbilityDict.Remove(ev.Player); }
+                if (PassiveRegenerateHealth.canRegenerateHealthDict.ContainsKey(ev.Player)) { PassiveRegenerateHealth.canRegenerateHealthDict.Remove(ev.Player); }
+
                 Cassie.MessageTranslated(CassieAnnouncementOnDeath, CassieSubtitlesOnDeath, true, true, true);
                 ev.Player.DisableEffect<Invisible>();
 
-                API.SpawnedObjects.FirstOrDefault(s => s.name == $"CustomSchematic-{Schematic}")?.Destroy();
-                if (sch != null)
+                // API.SpawnedObjects.FirstOrDefault(s => s.name == $"CustomSchematic-{Schematic}")?.Destroy();
+
+                if (schematics.TryGetValue(ev.Player, out SchematicObject sch))
                 {
-                    API.SpawnedObjects.Remove(sch);
-                    sch = null;
+                    sch?.Destroy();
+                    schematics?.Remove(ev.Player);
                 }
 
                 if (coro.IsRunning) { Timing.KillCoroutines(coro); }
@@ -154,20 +175,25 @@ namespace SCP999.Role
 
             if (Check(ev.Player))
             {
+                if (Healthy.canUseAbilityDict.ContainsKey(ev.Player)) { Healthy.canUseAbilityDict.Remove(ev.Player); }
+                if (PassiveRegenerateHealth.canRegenerateHealthDict.ContainsKey(ev.Player)) { PassiveRegenerateHealth.canRegenerateHealthDict.Remove(ev.Player); }
+
                 ev.Player.DisableEffect<Invisible>();
 
-                API.SpawnedObjects.FirstOrDefault(s => s.name == $"CustomSchematic-{Schematic}")?.Destroy();
-                if (sch != null)
+                // API.SpawnedObjects.FirstOrDefault(s => s.name == $"CustomSchematic-{Schematic}")?.Destroy();
+
+                if (schematics.TryGetValue(ev.Player, out SchematicObject sch))
                 {
-                    API.SpawnedObjects.Remove(sch);
-                    sch = null;
+                    sch?.Destroy();
+                    schematics?.Remove(ev.Player);
                 }
 
                 if (coro.IsRunning) { Timing.KillCoroutines(coro); }
             }
         }
 
-        private IEnumerator<float> AnimationHandler(Player player)
+        // experimental animation code
+        /* private IEnumerator<float> AnimationHandler(Player player)
         {
             yield return Timing.WaitForSeconds(0.1f);
             for (; ;)
@@ -193,6 +219,6 @@ namespace SCP999.Role
                     }
                 }
             }
-        }
+        } */
     }
 }

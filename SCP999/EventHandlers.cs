@@ -1,6 +1,9 @@
-﻿using Exiled.API.Features;
+﻿using Exiled.API.Extensions;
+using Exiled.API.Features;
+using Exiled.CustomRoles.API.Features;
 using Exiled.Events.EventArgs.Player;
 using MEC;
+using SCP999.Role;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +24,7 @@ namespace SCP999
                 {
                     if (rng.Next(1, 101) <= SCP999.Instance.Config.RoleConfigs.Scp999.Chance)
                     {
-                        SCP999.Instance.Config.RoleConfigs.Scp999.AddRole(Player.List.Where(x => x.IsScp).ToList().RandomItem());
+                        CustomRole.Get(typeof(CustomRoleScp999)).AddRole(Player.List.Where(x => x.IsScp).GetRandomValue());
                     }
                 }
             });

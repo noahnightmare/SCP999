@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Utf8Json.Resolvers.Internal;
 using PlayerEvent = Exiled.Events.Handlers.Player;
+using ServerEvent = Exiled.Events.Handlers.Server;
 
 namespace SCP999.Abilities
 {
@@ -29,12 +30,12 @@ namespace SCP999.Abilities
         [Description("Amount of time after being attacked that SCP 999 can recover health")]
         public float TimeBeforeHealthRecover { get; set; } = 10f;
 
-        private bool canRegenerateHealth = true;
+        public static Dictionary<Player, bool> canRegenerateHealthDict = new Dictionary<Player, bool>();
         private CoroutineHandle coro;
 
         protected override void SubscribeEvents()
         {
-            PlayerEvent.Spawned += OnSpawned;
+            ServerEvent.RoundStarted += OnRoundStarted;
             PlayerEvent.Hurting += OnHurting;
             PlayerEvent.ChangingRole += OnChangingRole;
             PlayerEvent.Died += OnDied;
@@ -43,24 +44,19 @@ namespace SCP999.Abilities
 
         protected override void UnsubscribeEvents()
         {
-            PlayerEvent.Spawned -= OnSpawned;
+            ServerEvent.RoundStarted -= OnRoundStarted;
             PlayerEvent.Hurting -= OnHurting;
             PlayerEvent.ChangingRole -= OnChangingRole;
             PlayerEvent.Died -= OnDied;
             base.UnsubscribeEvents();
         }
 
-        private void OnSpawned(SpawnedEventArgs ev)
+        private void OnRoundStarted()
         {
-            if (ev.Player == null) return;
-
-            // Handles running coro on spawn
+            // Handles running coro on start
             Timing.CallDelayed(0.25f, () =>
             {
-                if (Check(ev.Player))
-                {
-                    coro = Timing.RunCoroutine(HealthHandler());
-                }
+                coro = Timing.RunCoroutine(HealthHandler());
             });
         }
 
@@ -69,10 +65,10 @@ namespace SCP999.Abilities
             // Handles the canRegenerateHealth variable - set to true normally but if damaged set to false, and set back to true after x time
             if (Check(ev.Player))
             {
-                if (canRegenerateHealth)
+                if (canRegenerateHealthDict.TryGetValue(ev.Player, out bool canRegenerateHealth) && canRegenerateHealth)
                 {
-                    canRegenerateHealth = false;
-                    Timing.CallDelayed(TimeBeforeHealthRecover, () => { canRegenerateHealth = true; });
+                    canRegenerateHealthDict[ev.Player] = false;
+                    Timing.CallDelayed(TimeBeforeHealthRecover, () => { canRegenerateHealthDict[ev.Player] = true; });
                     
                 }
                 SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate = 0;
@@ -107,15 +103,14 @@ namespace SCP999.Abilities
             {
                 yield return Timing.WaitForSeconds(1f);
 
-                if (canRegenerateHealth)
+                foreach(Player player in canRegenerateHealthDict?.Keys)
                 {
-                    Player p = Player.List.FirstOrDefault(x => x.IsAlive && Check(x));
-
-                    if (p != null)
+                    if (canRegenerateHealthDict.TryGetValue(player, out bool canRegenerateHealth) && canRegenerateHealth)
                     {
-                        p.Heal(HealthRegainOverTime);
-                    }
-                };
+                        player.Heal(HealthRegainOverTime);
+                        Log.Info($"Healing {player.Nickname} for {HealthRegainOverTime} - should wait 1 second for next heal");
+                    } 
+                }
 
                 SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate += 1;
             }
