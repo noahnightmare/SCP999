@@ -6,6 +6,7 @@ using Exiled.Events.EventArgs.Player;
 using MapEditorReborn.API;
 using MapEditorReborn.Events.Handlers;
 using MEC;
+using SCP999.Handlers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -30,7 +31,7 @@ namespace SCP999.Abilities
         [Description("Amount of time after being attacked that SCP 999 can recover health")]
         public float TimeBeforeHealthRecover { get; set; } = 10f;
 
-        public static Dictionary<Player, DateTime> playerRegenerationTimers = new Dictionary<Player, DateTime>();
+        private CooldownHandler cooldownHandler = new CooldownHandler();
         private CoroutineHandle coro;
 
         protected override void SubscribeEvents()
@@ -62,13 +63,10 @@ namespace SCP999.Abilities
 
         private void OnHurting(HurtingEventArgs ev)
         {
-            // Handles the canRegenerateHealth variable - set to true normally but if damaged set to false, and set back to true after x time
+            // Handles the health regeneration cooldown
             if (Check(ev.Player))
             {
-                if (CanRegenerateHealth(ev.Player, out double remainingSeconds) && remainingSeconds <= 0)
-                {
-                    ResetRegenerateHealth(ev.Player, TimeSpan.FromSeconds(TimeBeforeHealthRecover));
-                }
+                cooldownHandler.PutOnCooldown(ev.Player, TimeSpan.FromSeconds(TimeBeforeHealthRecover));
 
                 SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate = 0;
             }
@@ -102,9 +100,9 @@ namespace SCP999.Abilities
             {
                 yield return Timing.WaitForSeconds(1f);
 
-                foreach(Player player in playerRegenerationTimers?.Keys)
+                foreach(Player player in cooldownHandler.GetPlayerCooldowns().Keys)
                 {
-                    if (CanRegenerateHealth(player, out double remainingSeconds))
+                    if (!cooldownHandler.IsOnCooldown(player, out double remainingSeconds))
                     {
                         player.Heal(HealthRegainOverTime);
                     } 
@@ -112,23 +110,6 @@ namespace SCP999.Abilities
 
                 SCP999.Instance.Config.RoleConfigs.Scp999.nextHumeRegenRate += 1;
             }
-        }
-
-        public bool CanRegenerateHealth(Player sender, out double remainingSeconds)
-        {
-            if (playerRegenerationTimers.TryGetValue(sender, out var expiration) && expiration > DateTime.UtcNow)
-            {
-                remainingSeconds = (expiration - DateTime.UtcNow).TotalSeconds;
-                return true;
-            }
-
-            remainingSeconds = 0;
-            return false;
-        }
-
-        public void ResetRegenerateHealth(Player key, TimeSpan duration)
-        {
-            playerRegenerationTimers[key] = DateTime.UtcNow + duration;
         }
     }
 }
