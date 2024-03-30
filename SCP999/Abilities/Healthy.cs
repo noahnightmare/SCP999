@@ -42,7 +42,7 @@ namespace SCP999.Abilities
         [Description("Volume of the sound above: 0 - 255")]
         public byte Volume { get; set; } = 255;
 
-        public static Dictionary<Player, bool> canUseAbilityDict = new Dictionary<Player, bool>();
+        public static Dictionary<Player, DateTime> playerCooldowns = new Dictionary<Player, DateTime>();
 
         protected override void SubscribeEvents()
         {
@@ -58,19 +58,22 @@ namespace SCP999.Abilities
         {
             if (player.IsNoclipPermitted) return;
 
-            if (canUseAbilityDict.TryGetValue(player, out bool canUseAbility) && canUseAbility && Check(player, Exiled.CustomRoles.API.Features.Enums.CheckType.Available))
+            if (!IsOnCooldown(player, out double remainingSeconds))
             {
-                canUseAbilityDict[player] = false;
+                PutOnCooldown(player, TimeSpan.FromSeconds(Cooldown));
                 SoundHandler.PlayAudio(AbilitySound, Volume, true, "SCP-999", new Vector3(player.Position.x, player.Position.y, player.Position.z), true, player);
                 Timing.RunCoroutine(AbilityInProgress(player).CancelWith(player.GameObject));
-            }
 
-            base.AbilityUsed(player);
+                base.AbilityUsed(player);
+            }
+            else
+            {
+                player.ShowHint($"Healthy is on cooldown!\nWait {(int)remainingSeconds} seconds until you can use it again.");
+            }
         }
 
         protected override void AbilityEnded(Player player)
         {
-            Timing.CallDelayed(Cooldown, () => { canUseAbilityDict[player] = true; });
             SoundHandler.StopAudio();
             base.AbilityEnded(player);
         }
@@ -90,6 +93,23 @@ namespace SCP999.Abilities
             }
 
             AbilityEnded(player);
+        }
+
+        public bool IsOnCooldown(Player sender, out double remainingSeconds)
+        {
+            if (playerCooldowns.TryGetValue(sender, out var expiration) && expiration > DateTime.UtcNow)
+            {
+                remainingSeconds = (expiration - DateTime.UtcNow).TotalSeconds;
+                return true;
+            }
+
+            remainingSeconds = 0;
+            return false;
+        }
+
+        public void PutOnCooldown(Player key, TimeSpan duration)
+        {
+            playerCooldowns[key] = DateTime.UtcNow + duration;
         }
     }
 }

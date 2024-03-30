@@ -115,11 +115,6 @@ namespace SCP999.Role
                 Timing.CallDelayed(0.25f, () => { ev.Player.HumeShield = HumeShield; });
                 ev.Player.EnableEffect<Invisible>();
 
-                Log.Info($"Adding player {ev.Player.Nickname} to both dictionaries");
-
-                Healthy.canUseAbilityDict.Add(ev.Player, true);
-                PassiveRegenerateHealth.canRegenerateHealthDict.Add(ev.Player, true);
-
                 if (Speed >= 0) ev.Player.EnableEffect<MovementBoost>((byte)Speed);
                 else { ev.Player.EnableEffect<Disabled>((byte)Speed, 0, false); ev.Player.EnableEffect<Sinkhole>((byte)-Speed, 0, false); }
 
@@ -151,9 +146,6 @@ namespace SCP999.Role
             // Handles sending the cassie message on death
             if (Check(ev.Player))
             {
-                if (Healthy.canUseAbilityDict.ContainsKey(ev.Player)) { Healthy.canUseAbilityDict.Remove(ev.Player); }
-                if (PassiveRegenerateHealth.canRegenerateHealthDict.ContainsKey(ev.Player)) { PassiveRegenerateHealth.canRegenerateHealthDict.Remove(ev.Player); }
-
                 Cassie.MessageTranslated(CassieAnnouncementOnDeath, CassieSubtitlesOnDeath, true, true, true);
                 ev.Player.DisableEffect<Invisible>();
 
@@ -175,9 +167,6 @@ namespace SCP999.Role
 
             if (Check(ev.Player))
             {
-                if (Healthy.canUseAbilityDict.ContainsKey(ev.Player)) { Healthy.canUseAbilityDict.Remove(ev.Player); }
-                if (PassiveRegenerateHealth.canRegenerateHealthDict.ContainsKey(ev.Player)) { PassiveRegenerateHealth.canRegenerateHealthDict.Remove(ev.Player); }
-
                 ev.Player.DisableEffect<Invisible>();
 
                 // API.SpawnedObjects.FirstOrDefault(s => s.name == $"CustomSchematic-{Schematic}")?.Destroy();
