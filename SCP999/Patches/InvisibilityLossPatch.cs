@@ -46,20 +46,24 @@
             if (!__instance._allowHandcuffed && !PlayerInteract.CanDisarmedInteract && hub.inventory.IsDisarmed())
             {
                 __result = false;
+                return false;
             }
             if (hub.interCoordinator.AnyBlocker(BlockedInteraction.GeneralInteractions))
             {
                 __result = false;
+                return false;
             }
             IFpcRole fpcRole = hub.roleManager.CurrentRole as IFpcRole;
             if (fpcRole == null)
             {
                 __result = false;
+                return false;
             }
             Transform transform = collider.transform;
             if (Vector3.Distance(fpcRole.FpcModule.Position, transform.position + transform.TransformDirection(collider.VerificationOffset)) > __instance._maxDistance * 1.4f)
             {
                 __result = false;
+                return false;
             }
             if (__instance._cancel268 && !CustomRole.Get(typeof(CustomRoleScp999)).Check(player))
             {
